@@ -34,26 +34,27 @@ def predict():
     file = request.files["file"]
     file_path = "temp.jpg"
     file.save(file_path)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+    def predict_image(image_path):
+    img = load_img(image_path, target_size=(224, 224))
+    img_array = img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0) / 255.0
+    predictions = model.predict(img_array, verbose=0)[0]
+    
+    conf = predictions * 100
+    pred_class = classes[np.argmax(predictions)]
+    
+    probs = {
+        'glioma': round(float(conf[0]), 2),
+        'meningioma': round(float(conf[1]), 2),
+        'notumor': round(float(conf[2]), 2),
+        'pituitary': round(float(conf[3]), 2)
+    }
+    
+    return pred_class, round(max(conf), 2), probs
 
-    try:
-        img = preprocess_img(file_path)
-        preds = model.predict(img)[0]
 
-        os.remove(file_path)
-
-        pred_index = np.argmax(preds)
-        confidence = round(float(preds[pred_index] * 100), 2)
-
-        output = CLASS_NAMES[pred_index]
-
-        return jsonify({
-            "prediction": output,
-            "confidence": confidence,
-            "probabilities": {
-                "glioma": round(float(preds[0] * 100), 2),
-                "meningioma": round(float(preds[1] * 100), 2),
-                "notumor": round(float(preds[2] * 100), 2),
-                "pituitary": round(float(preds[3] * 100), 2)
             }
         })
 
@@ -61,5 +62,3 @@ def predict():
         return jsonify({"error": str(e)})
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
